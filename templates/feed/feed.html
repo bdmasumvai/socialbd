@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}হোম - SocialBD{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+
+        <!-- Left Sidebar -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sbd-sidebar left-sidebar">
+                <a href="{% url 'profile' user.username %}" class="sidebar-profile-link">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3 hover-bg">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="sbd-avatar-md" alt="">
+                        {% else %}
+                        <div class="sbd-avatar-placeholder-md">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="text-muted small">@{{ user.username }}</div>
+                        </div>
+                    </div>
+                </a>
+                <hr>
+                <nav class="sidebar-nav">
+                    <a href="{% url 'feed' %}" class="sidebar-link active">
+                        <i class="fas fa-home"></i> নিউজ ফিড
+                    </a>
+                    <a href="{% url 'friend_requests' %}" class="sidebar-link">
+                        <i class="fas fa-user-friends"></i> বন্ধু অনুরোধ
+                    </a>
+                    <a href="{% url 'notifications' %}" class="sidebar-link">
+                        <i class="fas fa-bell"></i> বিজ্ঞপ্তি
+                        {% if unread_notifications > 0 %}
+                        <span class="badge bg-danger ms-auto">{{ unread_notifications }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'search' %}" class="sidebar-link">
+                        <i class="fas fa-search"></i> মানুষ খুঁজুন
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Feed -->
+        <div class="col-lg-6 col-md-8">
+            <!-- Create Post -->
+            <div class="card border-0 shadow-sm rounded-4 mb-3">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="sbd-avatar-md" alt="">
+                        {% else %}
+                        <div class="sbd-avatar-placeholder-md">{{ user.first_name|first|upper }}</div>
+                        {% endif %}
+                        <button class="btn post-input-btn flex-grow-1 text-start" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            {{ user.first_name }}, আপনার মনে কী আসছে?
+                        </button>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-around">
+                        <button class="btn btn-light btn-sm rounded-3 flex-grow-1 me-2" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="fas fa-image text-success me-2"></i>ছবি
+                        </button>
+                        <button class="btn btn-light btn-sm rounded-3 flex-grow-1" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                            <i class="fas fa-smile text-warning me-2"></i>অনুভূতি
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts -->
+            {% for post in posts %}
+            <div class="card border-0 shadow-sm rounded-4 mb-3 post-card" data-post-id="{{ post.id }}">
+                <div class="card-body p-3">
+                    <!-- Post Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <a href="{% url 'profile' post.user.username %}" class="d-flex align-items-center gap-3 text-decoration-none">
+                            {% if post.user.profile_picture %}
+                            <img src="{{ post.user.profile_picture.url }}" class="sbd-avatar-md" alt="">
+                            {% else %}
+                            <div class="sbd-avatar-placeholder-md">{{ post.user.first_name|first|upper }}{{ post.user.last_name|first|upper }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="fw-semibold text-dark">{{ post.user.get_full_name|default:post.user.username }}</div>
+                                <div class="text-muted small">
+                                    {{ post.created_at|timesince }} আগে
+                                    {% if post.privacy == 'public' %}<i class="fas fa-globe-asia ms-1"></i>
+                                    {% elif post.privacy == 'friends' %}<i class="fas fa-user-friends ms-1"></i>
+                                    {% else %}<i class="fas fa-lock ms-1"></i>{% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        {% if post.user == user %}
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                <li>
+                                    <form method="post" action="{% url 'delete_post' post.id %}">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item text-danger" type="submit" onclick="return confirm('পোস্ট মুছে ফেলবেন?')">
+                                            <i class="fas fa-trash me-2"></i>মুছুন
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Post Content -->
+                    {% if post.content %}
+                    <p class="post-content mb-3">{{ post.content }}</p>
+                    {% endif %}
+                    {% if post.image %}
+                    <img src="{{ post.image.url }}" class="post-image w-100 rounded-3 mb-3" alt="">
+                    {% endif %}
+
+                    <!-- Like/Comment Count -->
+                    <div class="d-flex justify-content-between text-muted small mb-2">
+                        <span id="like-count-{{ post.id }}">
+                            {% if post.get_likes_count > 0 %}
+                            <i class="fas fa-thumbs-up text-primary"></i> {{ post.get_likes_count }}
+                            {% endif %}
+                        </span>
+                        <span>{{ post.get_comments_count }} টি মন্তব্য</span>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-light flex-grow-1 rounded-3 like-btn {% if post.is_liked_by(user) %}liked{% endif %}"
+                                data-post-id="{{ post.id }}"
+                                onclick="toggleLike({{ post.id }})">
+                            <i class="{% if post.is_liked_by(user) %}fas{% else %}far{% endif %} fa-thumbs-up me-2" id="like-icon-{{ post.id }}"></i>
+                            <span id="like-text-{{ post.id }}">{% if post.is_liked_by(user) %}লাইক দেওয়া হয়েছে{% else %}লাইক{% endif %}</span>
+                        </button>
+                        <button class="btn btn-light flex-grow-1 rounded-3" onclick="focusComment({{ post.id }})">
+                            <i class="far fa-comment me-2"></i>মন্তব্য
+                        </button>
+                        <button class="btn btn-light flex-grow-1 rounded-3">
+                            <i class="fas fa-share me-2"></i>শেয়ার
+                        </button>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="comments-section" id="comments-{{ post.id }}">
+                        {% for comment in post.comments.all|slice:":3" %}
+                        <div class="d-flex gap-2 mb-2">
+                            {% if comment.user.profile_picture %}
+                            <img src="{{ comment.user.profile_picture.url }}" class="sbd-avatar-xs mt-1" alt="">
+                            {% else %}
+                            <div class="sbd-avatar-placeholder-xs mt-1">{{ comment.user.first_name|first|upper }}</div>
+                            {% endif %}
+                            <div class="comment-bubble flex-grow-1">
+                                <div class="fw-semibold small">{{ comment.user.get_full_name|default:comment.user.username }}</div>
+                                <div class="small">{{ comment.content }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Add Comment -->
+                        <div class="d-flex gap-2 mt-2">
+                            {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" class="sbd-avatar-xs mt-1" alt="">
+                            {% else %}
+                            <div class="sbd-avatar-placeholder-xs mt-1">{{ user.first_name|first|upper }}</div>
+                            {% endif %}
+                            <div class="input-group">
+                                <input type="text" class="form-control rounded-pill comment-input" id="comment-input-{{ post.id }}"
+                                       placeholder="মন্তব্য করুন..."
+                                       onkeypress="if(event.key==='Enter') submitComment({{ post.id }})">
+                                <button class="btn btn-sbd-sm rounded-pill ms-1" onclick="submitComment({{ post.id }})">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+                <div class="text-muted">
+                    <i class="fas fa-newspaper fa-3x mb-3 text-primary opacity-50"></i>
+                    <h5>কোনো পোস্ট নেই</h5>
+                    <p>বন্ধু যোগ করুন অথবা নিজে পোস্ট করুন!</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sbd-sidebar right-sidebar">
+                <h6 class="fw-bold text-muted mb-3 px-2">আপনি চিনতে পারেন</h6>
+                {% for suggestion in suggestions %}
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 hover-bg mb-1" id="suggestion-{{ suggestion.id }}">
+                    <a href="{% url 'profile' suggestion.username %}" class="d-flex align-items-center gap-2 text-decoration-none flex-grow-1">
+                        {% if suggestion.profile_picture %}
+                        <img src="{{ suggestion.profile_picture.url }}" class="sbd-avatar-sm" alt="">
+                        {% else %}
+                        <div class="sbd-avatar-placeholder-sm">{{ suggestion.first_name|first|upper }}{{ suggestion.last_name|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="fw-medium small text-dark">{{ suggestion.get_full_name|default:suggestion.username }}</div>
+                            <div class="text-muted" style="font-size:11px">@{{ suggestion.username }}</div>
+                        </div>
+                    </a>
+                    <button class="btn btn-sbd-outline btn-sm rounded-pill" onclick="addFriend({{ suggestion.id }}, this)">
+                        <i class="fas fa-user-plus me-1"></i>যোগ করুন
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered rounded-4">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">পোস্ট তৈরি করুন</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'create_post' %}" enctype="multipart/form-data" id="postForm">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" class="sbd-avatar-md" alt="">
+                        {% else %}
+                        <div class="sbd-avatar-placeholder-md">{{ user.first_name|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                            <select name="privacy" class="form-select form-select-sm border-0 bg-light rounded-pill mt-1" style="width:auto">
+                                <option value="public">🌏 সবাই</option>
+                                <option value="friends">👥 বন্ধুরা</option>
+                                <option value="only_me">🔒 শুধু আমি</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea name="content" class="form-control border-0 fs-5" placeholder="{{ user.first_name }}, আপনার মনে কী আসছে?" rows="5" style="resize:none; background:transparent;"></textarea>
+                    <div id="image-preview" class="mt-2 d-none">
+                        <img id="preview-img" src="" class="img-fluid rounded-3" alt="">
+                    </div>
+                    <hr>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex gap-2">
+                            <label class="btn btn-light rounded-3 mb-0" for="postImage">
+                                <i class="fas fa-image text-success"></i>
+                                <input type="file" name="image" id="postImage" accept="image/*" class="d-none" onchange="previewImage(this)">
+                            </label>
+                            <button type="button" class="btn btn-light rounded-3">
+                                <i class="fas fa-smile text-warning"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-sbd rounded-pill px-4">পোস্ট করুন</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+function toggleLike(postId) {
+    fetch(`/post/like/${postId}/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        const icon = document.getElementById(`like-icon-${postId}`);
+        const text = document.getElementById(`like-text-${postId}`);
+        const count = document.getElementById(`like-count-${postId}`);
+        if (data.liked) {
+            icon.className = 'fas fa-thumbs-up me-2 text-primary';
+            text.textContent = 'লাইক দেওয়া হয়েছে';
+        } else {
+            icon.className = 'far fa-thumbs-up me-2';
+            text.textContent = 'লাইক';
+        }
+        count.innerHTML = data.count > 0 ? `<i class="fas fa-thumbs-up text-primary"></i> ${data.count}` : '';
+    });
+}
+
+function submitComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+    if (!content) return;
+
+    fetch(`/post/comment/${postId}/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `content=${encodeURIComponent(content)}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const section = document.getElementById(`comments-${postId}`);
+            const div = document.createElement('div');
+            div.className = 'd-flex gap-2 mb-2';
+            div.innerHTML = `
+                <div class="sbd-avatar-placeholder-xs mt-1">${data.username[0]}</div>
+                <div class="comment-bubble flex-grow-1">
+                    <div class="fw-semibold small">${data.username}</div>
+                    <div class="small">${data.content}</div>
+                </div>`;
+            section.insertBefore(div, section.lastElementChild);
+            input.value = '';
+        }
+    });
+}
+
+function focusComment(postId) {
+    document.getElementById(`comment-input-${postId}`).focus();
+}
+
+function addFriend(userId, btn) {
+    fetch(`/friends/send/${userId}/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': CSRF_TOKEN}
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>পাঠানো হয়েছে';
+        btn.disabled = true;
+        btn.className = 'btn btn-success btn-sm rounded-pill';
+    });
+}
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('image-preview').classList.remove('d-none');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
