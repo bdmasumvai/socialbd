@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}লগইন - SocialBD{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="container">
+        <div class="row min-vh-100 align-items-center justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <!-- Logo -->
+                <div class="text-center mb-4">
+                    <div class="auth-logo mx-auto mb-3">
+                        <span>S</span>
+                    </div>
+                    <h1 class="auth-brand">SocialBD</h1>
+                    <p class="text-muted">বাংলাদেশের নিজস্ব সোশ্যাল নেটওয়ার্ক</p>
+                </div>
+
+                <!-- Login Card -->
+                <div class="card border-0 shadow-lg rounded-4 p-4">
+                    <h4 class="fw-bold mb-4 text-center">লগইন করুন</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">ইউজারনেম</label>
+                            <input type="text" name="username" class="form-control form-control-lg rounded-3" placeholder="আপনার ইউজারনেম" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">পাসওয়ার্ড</label>
+                            <div class="input-group">
+                                <input type="password" name="password" id="password" class="form-control form-control-lg rounded-start-3" placeholder="পাসওয়ার্ড" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePass()">
+                                    <i class="fas fa-eye" id="passIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-3">ভুল ইউজারনেম বা পাসওয়ার্ড।</div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-sbd w-100 btn-lg rounded-3 mt-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>লগইন
+                        </button>
+                    </form>
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <p class="mb-0">অ্যাকাউন্ট নেই? <a href="{% url 'register' %}" class="sbd-link fw-semibold">রেজিস্ট্রেশন করুন</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePass() {
+    const p = document.getElementById('password');
+    const i = document.getElementById('passIcon');
+    if (p.type === 'password') { p.type = 'text'; i.className = 'fas fa-eye-slash'; }
+    else { p.type = 'password'; i.className = 'fas fa-eye'; }
+}
+</script>
+{% endblock %}
