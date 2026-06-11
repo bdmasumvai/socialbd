@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}রেজিস্ট্রেশন - SocialBD{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="container">
+        <div class="row min-vh-100 align-items-center justify-content-center py-5">
+            <div class="col-md-6 col-lg-5">
+                <div class="text-center mb-4">
+                    <div class="auth-logo mx-auto mb-3"><span>S</span></div>
+                    <h1 class="auth-brand">SocialBD</h1>
+                    <p class="text-muted">আজই যোগ দিন, বন্ধুদের সাথে সংযুক্ত হন</p>
+                </div>
+
+                <div class="card border-0 shadow-lg rounded-4 p-4">
+                    <h4 class="fw-bold mb-4 text-center">নতুন অ্যাকাউন্ট খুলুন</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-medium">নাম</label>
+                                <input type="text" name="first_name" class="form-control rounded-3" placeholder="প্রথম নাম" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-medium">苗字</label>
+                                <input type="text" name="last_name" class="form-control rounded-3" placeholder="শেষ নাম" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium">ইউজারনেম</label>
+                                <input type="text" name="username" class="form-control rounded-3" placeholder="ইউনিক ইউজারনেম" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium">ইমেইল</label>
+                                <input type="email" name="email" class="form-control rounded-3" placeholder="ইমেইল ঠিকানা" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium">পাসওয়ার্ড</label>
+                                <input type="password" name="password1" class="form-control rounded-3" placeholder="পাসওয়ার্ড (কমপক্ষে ৮ অক্ষর)" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium">পাসওয়ার্ড নিশ্চিত করুন</label>
+                                <input type="password" name="password2" class="form-control rounded-3" placeholder="পাসওয়ার্ড আবার দিন" required>
+                            </div>
+                        </div>
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-3 mt-3">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}<div>{{ error }}</div>{% endfor %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-sbd w-100 btn-lg rounded-3 mt-4">
+                            <i class="fas fa-user-plus me-2"></i>অ্যাকাউন্ট তৈরি করুন
+                        </button>
+
+                        <p class="text-muted text-center small mt-3 mb-0">
+                            নিবন্ধন করে আপনি আমাদের <a href="#" class="sbd-link">শর্তাবলী</a> মেনে নিচ্ছেন
+                        </p>
+                    </form>
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <p class="mb-0">অ্যাকাউন্ট আছে? <a href="{% url 'login' %}" class="sbd-link fw-semibold">লগইন করুন</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
