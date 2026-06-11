@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}বন্ধু অনুরোধ - SocialBD{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width:700px">
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold mb-3">বন্ধু অনুরোধ</h5>
+        {% for req in requests %}
+        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 hover-bg mb-2" id="req-{{ req.sender.id }}">
+            <a href="{% url 'profile' req.sender.username %}" class="d-flex align-items-center gap-3 text-decoration-none flex-grow-1">
+                {% if req.sender.profile_picture %}
+                <img src="{{ req.sender.profile_picture.url }}" class="sbd-avatar-md" alt="">
+                {% else %}
+                <div class="sbd-avatar-placeholder-md">{{ req.sender.first_name|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="fw-semibold text-dark">{{ req.sender.get_full_name|default:req.sender.username }}</div>
+                    <div class="text-muted small">{{ req.created_at|timesince }} আগে অনুরোধ পাঠিয়েছে</div>
+                </div>
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sbd btn-sm rounded-3" onclick="accept({{ req.sender.id }})">গ্রহণ</button>
+                <button class="btn btn-light btn-sm rounded-3" onclick="reject({{ req.sender.id }})">প্রত্যাখ্যান</button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-user-friends fa-3x mb-3 opacity-50"></i>
+            <p>কোনো বন্ধু অনুরোধ নেই।</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+function accept(id) {
+    fetch(`/friends/accept/${id}/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r=>r.json()).then(()=>document.getElementById(`req-${id}`).remove());
+}
+function reject(id) {
+    fetch(`/friends/reject/${id}/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r=>r.json()).then(()=>document.getElementById(`req-${id}`).remove());
+}
+</script>
+{% endblock %}
